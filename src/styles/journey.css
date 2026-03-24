@@ -1,0 +1,456 @@
+/* ─── JOURNEY MAP STYLES ──────────────────────────── */
+/* Atlassian Design System — spacious, bold, branded    */
+
+/* ─── DARK THEME (default) ───────────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg: #091E42;           /* N900 — darkest background */
+  --s1: #0A1E3D;           /* between N900 and N800 */
+  --s2: #172B4D;           /* N800 — card/surface background */
+  --s3: #253858;           /* N700 — elevated surfaces */
+  --border: rgba(166,197,226,0.08);
+  --border-hi: rgba(166,197,226,0.18);
+  --text: #B3BAC5;         /* N80 — primary text on dark */
+  --text-bright: #FAFBFC;  /* N10 — headings on dark */
+  --muted: #505F79;        /* N300 — secondary text on dark */
+  --accent: #0065FF;       /* B400 — primary accent */
+  --accent-subtle: #0052CC; /* B500 — links, highlights */
+  --flag-text: #FFFFFF;
+  --font: 'Sora', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+/* ─── LIGHT THEME ────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #FAFBFC;           /* N10 — lightest background */
+  --s1: #F4F5F7;           /* N20 — subtle surface */
+  --s2: #EBECF0;           /* N30 — card background */
+  --s3: #DFE1E6;           /* N40 — elevated surfaces */
+  --border: rgba(9,30,66,0.08);
+  --border-hi: rgba(9,30,66,0.14);
+  --text: #42526E;         /* N500 — primary body text */
+  --text-bright: #091E42;  /* N900 — headings */
+  --muted: #6B778C;        /* N200 — secondary text */
+  --accent: #0052CC;       /* B500 — links, buttons */
+  --accent-subtle: #0065FF; /* B400 — highlights */
+  --flag-text: #FFFFFF;
+}
+
+/* ─── AMBIENT GLOW ────────────────────────────── */
+.journey-page::before {
+  content: '';
+  position: fixed;
+  top: -300px; left: -200px;
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(0,101,255,0.05) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+.journey-page::after {
+  content: '';
+  position: fixed;
+  bottom: -200px; right: -150px;
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(101,84,192,0.05) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ─── HEADER ──────────────────────────────────── */
+.jm-hdr {
+  position: relative; z-index: 10;
+  padding: 48px 56px 40px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.jm-eyebrow {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+}
+.jm-title {
+  font-size: 42px; font-weight: 800;
+  color: var(--text-bright); letter-spacing: -.03em; line-height: 1.05;
+}
+.jm-title em { color: var(--accent); font-style: normal; }
+.jm-stats {
+  display: flex; gap: 10px; align-items: center;
+}
+.jm-chip {
+  background: var(--s2);
+  border: 1px solid var(--border-hi);
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 14px; font-weight: 500;
+  color: var(--muted);
+}
+.jm-chip b { color: var(--text-bright); font-weight: 700; margin-right: 3px; }
+
+/* ─── HINT BAR ────────────────────────────────── */
+.jm-hint-bar {
+  position: relative; z-index: 10;
+  padding: 14px 56px;
+  background: rgba(0,101,255,0.04);
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 36px; flex-wrap: wrap;
+  font-size: 13px; color: rgba(76,154,255,0.6);
+}
+.jm-hint-item { display: flex; align-items: center; gap: 8px; }
+.jm-hint-icon { font-size: 14px; }
+
+/* ─── JOURNEY AREA ────────────────────────────── */
+.jm-journey-area {
+  position: relative; z-index: 5;
+  padding: 48px 56px 64px;
+  overflow-x: auto;
+}
+
+/* ─── FLAGS ROW ───────────────────────────────── */
+.jm-flags-row {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 24px;
+  position: relative; z-index: 20;
+}
+
+/* ─── MODULE BLOCK (draggable) ────────────────── */
+.jm-module {
+  flex-shrink: 0;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  animation: jm-reveal-up .4s ease both;
+}
+.jm-module:active { cursor: grabbing; }
+.jm-module.is-dragging { opacity: 0.25; pointer-events: none; }
+.jm-module.is-over::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ─── FLAG / CHEVRON ──────────────────────────── */
+.jm-flag-wrap { position: relative; }
+.jm-flag {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 12px 24px 12px 16px;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--flag-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative; z-index: 2;
+  transition: filter .2s;
+}
+.jm-flag:hover { filter: brightness(1.15); }
+.jm-flag--first {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+  border-radius: 6px 0 0 6px;
+}
+.jm-flag--rest {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%);
+  margin-left: -12px;
+  padding-left: 26px;
+}
+.jm-flag-num {
+  background: rgba(0,0,0,0.22);
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.jm-flag-drag {
+  margin-left: auto;
+  font-size: 10px; opacity: 0.4;
+}
+
+/* ─── FLAG TOOLTIP ────────────────────────────── */
+.jm-flag-tooltip {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-40%) translateY(-4px);
+  width: 280px;
+  background: var(--bg);
+  border: 1px solid var(--border-hi);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+  overflow: hidden;
+}
+.jm-flag-wrap:hover .jm-flag-tooltip,
+.jm-module:hover .jm-flag-tooltip {
+  opacity: 1;
+  transform: translateX(-40%) translateY(0);
+}
+.jm-module.is-dragging .jm-flag-tooltip { display: none; }
+.jm-ft-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.jm-ft-mod-name {
+  font-size: 13px; font-weight: 700;
+  color: var(--text-bright); line-height: 1.3;
+  flex: 1;
+}
+.jm-ft-badge {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.jm-ft-body { padding: 14px 18px 16px; }
+.jm-ft-lbl {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+.jm-ft-obj-row {
+  display: flex; gap: 9px; align-items: flex-start;
+  font-size: 12px; line-height: 1.5;
+  color: var(--text); margin-bottom: 5px;
+  padding-left: 4px;
+}
+.jm-ft-obj-pip {
+  width: 5px; height: 5px; border-radius: 50%;
+  margin-top: 7px; flex-shrink: 0;
+}
+.jm-ft-none {
+  font-size: 12px; color: var(--muted);
+  font-style: italic; padding: 4px 0;
+}
+.jm-ft-stats {
+  display: flex; gap: 12px;
+  padding: 10px 18px 14px;
+  border-top: 1px solid var(--border);
+}
+.jm-ft-stat {
+  display: flex; flex-direction: column;
+  align-items: center; flex: 1;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: .05em; text-transform: uppercase;
+  gap: 3px;
+}
+.jm-ft-stat b { font-size: 20px; font-weight: 800; color: var(--text-bright); line-height: 1; }
+
+/* ─── FLAG TEXT ────────────────────────────────── */
+.jm-flag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+/* ─── TRACK ───────────────────────────────────── */
+.jm-track {
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 0 20px 32px;
+}
+.jm-track::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 24px;
+  left: 50%; transform: translateX(-1px);
+  width: 2px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--track-col) 0, var(--track-col) 7px,
+    transparent 7px, transparent 14px
+  );
+  opacity: 0.4;
+  z-index: 0;
+}
+.jm-track-cap {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  opacity: 0.7;
+  margin: 0 auto;
+  position: relative; z-index: 1;
+  margin-top: 8px; margin-bottom: 4px;
+}
+
+/* ─── TOUCHPOINT ──────────────────────────────── */
+.jm-tp {
+  position: relative; z-index: 2;
+  width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  cursor: pointer;
+}
+.jm-tp-node {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid var(--node-col);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  color: var(--node-col);
+  position: relative; z-index: 2;
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+  flex-shrink: 0;
+}
+.jm-tp-node.has-obj {
+  background: color-mix(in srgb, var(--node-col) 12%, var(--bg) 88%);
+}
+@keyframes jm-ring-pulse {
+  0%,100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--node-col) 15%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--node-col) 6%, transparent); }
+}
+.jm-tp-node.has-obj { animation: jm-ring-pulse 3.5s ease-in-out infinite; }
+.jm-tp:hover .jm-tp-node {
+  transform: scale(1.25);
+  animation: none;
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--node-col) 22%, transparent);
+}
+.jm-tp-card {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  font-size: 13px; font-weight: 500;
+  line-height: 1.5;
+  text-align: center; width: 100%;
+  transition: background .15s, border-color .15s;
+}
+.jm-tp:hover .jm-tp-card {
+  background: var(--s1);
+  border-color: var(--border-hi);
+}
+.jm-tp-obj-label {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* ─── OBJECTIVES PANEL ────────────────────────── */
+.jm-panel {
+  position: fixed;
+  right: -420px; top: 50%;
+  transform: translateY(-50%);
+  width: 400px; max-height: 82vh;
+  overflow-y: auto;
+  background: var(--s1);
+  border: 1px solid var(--border-hi);
+  border-radius: 18px;
+  z-index: 500;
+  box-shadow: -10px 0 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  transition: right .32s cubic-bezier(.4,0,.2,1);
+  will-change: right;
+}
+.jm-panel.open { right: 24px; }
+.jm-panel-hdr {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--s1);
+  border-radius: 18px 18px 0 0;
+  z-index: 2;
+}
+.jm-panel-tag {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 20px;
+  display: inline-block; margin-bottom: 12px;
+}
+.jm-panel-topic {
+  font-size: 18px; font-weight: 700;
+  color: var(--text-bright); line-height: 1.35;
+  padding-right: 36px;
+}
+.jm-panel-close {
+  position: absolute; top: 18px; right: 18px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  color: var(--muted); font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s, background .15s;
+  line-height: 1;
+}
+.jm-panel-close:hover { color: var(--text); background: var(--s3); }
+.jm-panel-body { padding: 20px 24px 28px; }
+.jm-panel-section-lbl {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+}
+.jm-obj-row {
+  display: flex; gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--s2);
+  border-radius: 10px; margin-bottom: 8px;
+  font-size: 14px; line-height: 1.55;
+  color: var(--text);
+}
+.jm-obj-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-top: 8px; flex-shrink: 0;
+}
+.jm-panel-empty {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 20px;
+  background: var(--s2); border-radius: 10px;
+}
+
+/* ─── LEGEND ──────────────────────────────────── */
+.jm-legend {
+  position: relative; z-index: 10;
+  padding: 20px 56px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 32px; flex-wrap: wrap;
+  font-size: 13px; color: var(--muted);
+}
+.jm-leg { display: flex; align-items: center; gap: 8px; }
+.jm-leg-node {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  display: inline-block;
+}
+.jm-leg-node.filled {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── ANIMATIONS ──────────────────────────────── */
+@keyframes jm-reveal-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SCROLLBAR ───────────────────────────────── */
+.journey-page ::-webkit-scrollbar { width: 6px; height: 6px; }
+.journey-page ::-webkit-scrollbar-track { background: transparent; }
+.journey-page ::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 3px; }
+.journey-page ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
