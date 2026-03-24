@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ParseResult } from '@/types/journey';
 import { useJourney } from '@/lib/JourneyContext';
+import { Upload } from 'lucide-react';
 
 export default function DocxUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -85,11 +86,10 @@ export default function DocxUpload() {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 20px',
-            fontSize: 24,
             color: 'var(--accent)',
           }}
         >
-          ↑
+          <Upload size={24} />
         </div>
 
         {isUploading ? (

@@ -5,13 +5,19 @@ import { Module, Objective, SelectedItem } from '@/types/journey';
 import { getModuleColor } from '@/lib/colorTokens';
 import { useJourney } from '@/lib/JourneyContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import {
+  GripVertical,
+  Eye,
+  Circle,
+  Star,
+  X,
+} from 'lucide-react';
 
 // ── Column width ─────────────────────────────────
 const MIN_COL_WIDTH = 220;
 const MAX_COL_WIDTH = 320;
 
 function calcColWidth(moduleCount: number): number {
-  // Aim for columns that comfortably fill ~1200px, clamped to min/max
   if (moduleCount === 0) return MIN_COL_WIDTH;
   const ideal = Math.floor(1200 / moduleCount);
   return Math.max(MIN_COL_WIDTH, Math.min(MAX_COL_WIDTH, ideal));
@@ -41,6 +47,11 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
+  // Pointer-based drag tracking refs
+  const isDraggingRef = useRef(false);
+  const dragFromIdx = useRef<number | null>(null);
+  const flagRowRef = useRef<HTMLDivElement>(null);
+
   // Panel state
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelModule, setPanelModule] = useState<Module | null>(null);
@@ -69,45 +80,73 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
   // Column width based on module count
   const colWidth = useMemo(() => calcColWidth(modules.length), [modules.length]);
 
-  // ── Drag handlers ──────────────────────────────
-  const handleDragStart = useCallback((e: React.DragEvent, dispIdx: number) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', String(dispIdx));
-    // Use a minimal transparent drag image so the browser doesn't ghost the whole div
-    const el = e.currentTarget as HTMLElement;
-    e.dataTransfer.setDragImage(el, el.offsetWidth / 2, 20);
+  // ── Pointer-based drag handlers ────────────────
+  // These replace the HTML5 drag API for reliability
+
+  const handlePointerDown = useCallback((e: React.PointerEvent, dispIdx: number) => {
+    // Only start drag from the grip icon area or the flag itself
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    isDraggingRef.current = true;
+    dragFromIdx.current = dispIdx;
     setDragFrom(dispIdx);
+    setDragOver(null);
   }, []);
 
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, dispIdx: number) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      setDragOver(dispIdx);
-    },
-    [],
-  );
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDraggingRef.current || dragFromIdx.current === null) return;
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, toIdx: number) => {
-      e.preventDefault();
-      if (dragFrom === null || dragFrom === toIdx) return;
-      setOrder((prev) => {
-        const next = [...prev];
-        const [moved] = next.splice(dragFrom, 1);
-        next.splice(toIdx, 0, moved);
-        return next;
-      });
-      setPanelOpen(false);
-      setDragFrom(null);
+    // Find which module column the pointer is over
+    const row = flagRowRef.current;
+    if (!row) return;
+    const children = Array.from(row.children) as HTMLElement[];
+    const x = e.clientX;
+
+    let overIdx: number | null = null;
+    for (let i = 0; i < children.length; i++) {
+      const rect = children[i].getBoundingClientRect();
+      if (x >= rect.left && x < rect.right) {
+        overIdx = i;
+        break;
+      }
+    }
+    // If past the last column, treat as last
+    if (overIdx === null && children.length > 0) {
+      const lastRect = children[children.length - 1].getBoundingClientRect();
+      if (x >= lastRect.right) overIdx = children.length - 1;
+      const firstRect = children[0].getBoundingClientRect();
+      if (x < firstRect.left) overIdx = 0;
+    }
+
+    if (overIdx !== null && overIdx !== dragFromIdx.current) {
+      setDragOver(overIdx);
+    } else {
       setDragOver(null);
-    },
-    [dragFrom],
-  );
+    }
+  }, []);
 
-  const handleDragEnd = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
+    if (!isDraggingRef.current) return;
+    const fromIdx = dragFromIdx.current;
+
+    isDraggingRef.current = false;
+    dragFromIdx.current = null;
+
+    // Read dragOver from a callback to get the latest value
+    setDragOver((currentOver) => {
+      if (fromIdx !== null && currentOver !== null && fromIdx !== currentOver) {
+        setOrder((prev) => {
+          const next = [...prev];
+          const [moved] = next.splice(fromIdx, 1);
+          next.splice(currentOver, 0, moved);
+          return next;
+        });
+        setPanelOpen(false);
+      }
+      return null; // clear dragOver
+    });
+
     setDragFrom(null);
-    setDragOver(null);
   }, []);
 
   // ── Panel open ─────────────────────────────────
@@ -129,9 +168,9 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
   if (modules.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-12">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm" style={{ color: 'var(--muted)' }}>
           No modules to display.{' '}
-          <a href="/" className="underline text-blue-400">
+          <a href="/" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
             Upload a design doc
           </a>{' '}
           to get started.
@@ -166,16 +205,16 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
       {/* ── Hint bar ───────────────────────────── */}
       <div className="jm-hint-bar">
         <div className="jm-hint-item">
-          <span className="jm-hint-icon">⠿</span> Drag a module flag to reorder
+          <GripVertical size={13} /> Drag a module flag to reorder
         </div>
         <div className="jm-hint-item">
-          <span className="jm-hint-icon">◈</span> Hover a flag to see objectives
+          <Eye size={13} /> Hover a flag to see objectives
         </div>
         <div className="jm-hint-item">
-          <span className="jm-hint-icon">○</span> Click any node to view details
+          <Circle size={13} /> Click any node to view details
         </div>
         <div className="jm-hint-item">
-          <span className="jm-hint-icon">★</span> Gold star = objectives attached
+          <Star size={13} /> Filled node = objectives attached
         </div>
       </div>
 
@@ -183,7 +222,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
       <div className="jm-journey-area">
         <div style={{ position: 'relative' }}>
           {/* Flags row */}
-          <div className="jm-flags-row">
+          <div className="jm-flags-row" ref={flagRowRef}>
             {order.map((modIdx, dispIdx) => {
               const mod = modules[modIdx];
               const color = getModuleColor(modIdx).hex;
@@ -197,15 +236,11 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                   className={`jm-module${isDragging ? ' is-dragging' : ''}${isOver ? ' is-over' : ''}`}
                   style={{
                     width: colWidth,
-                    zIndex: order.length - dispIdx + 10,
-                    animationDelay: `${dispIdx * 0.06}s`,
+                    zIndex: isDragging ? 999 : order.length - dispIdx + 10,
                   }}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, dispIdx)}
-                  onDragOver={(e) => handleDragOver(e, dispIdx)}
-                  onDrop={(e) => handleDrop(e, dispIdx)}
-                  onDragLeave={() => setDragOver(null)}
-                  onDragEnd={handleDragEnd}
+                  onPointerDown={(e) => handlePointerDown(e, dispIdx)}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
                 >
                   <div className="jm-flag-wrap">
                     {/* Chevron flag */}
@@ -215,11 +250,11 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                     >
                       <span className="jm-flag-num">{dispIdx + 1}</span>
                       <span className="jm-flag-text">{mod.title}</span>
-                      <span className="jm-flag-drag">⠿</span>
+                      <GripVertical size={12} style={{ opacity: 0.4, marginLeft: 'auto', flexShrink: 0 }} />
                     </div>
 
                     {/* Tooltip */}
-                    <FlagTooltip module={mod} objectives={modObjs} color={color} />
+                    {!isDragging && <FlagTooltip module={mod} objectives={modObjs} color={color} />}
                   </div>
                 </div>
               );
@@ -227,7 +262,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
           </div>
 
           {/* Module columns (tracks) */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', position: 'relative' }}>
             {order.map((modIdx, dispIdx) => {
               const mod = modules[modIdx];
               const color = getModuleColor(modIdx).hex;
@@ -263,7 +298,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                         className="jm-tp-node"
                         style={{ '--node-col': color } as React.CSSProperties}
                       >
-                        0
+                        <Circle size={10} />
                       </div>
                       <div className="jm-tp-card">
                         {mod.shortDescription || mod.title}
@@ -271,7 +306,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                     </div>
 
                     {/* Objective touchpoints */}
-                    {modObjs.map((obj, oi) => (
+                    {modObjs.map((obj) => (
                       <div
                         key={obj.id}
                         className="jm-tp"
@@ -281,7 +316,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                           className="jm-tp-node has-obj"
                           style={{ '--node-col': color } as React.CSSProperties}
                         >
-                          ★
+                          <Star size={12} fill="currentColor" />
                         </div>
                         <div
                           className="jm-tp-card"
@@ -317,7 +352,9 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
         <div className="jm-leg">
           <div className="jm-leg-node" /> No objectives defined
         </div>
-        <div className="jm-leg">★ Objective node</div>
+        <div className="jm-leg">
+          <Star size={12} style={{ color: 'var(--muted)' }} /> Objective node
+        </div>
       </div>
 
       {/* ── Objectives panel ───────────────────── */}
@@ -347,7 +384,7 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                 className="jm-panel-close"
                 onClick={() => setPanelOpen(false)}
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
             <div className="jm-panel-body">
@@ -356,7 +393,6 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
               </div>
 
               {panelObjective ? (
-                /* Single objective detail */
                 <div>
                   <div className="jm-obj-row">
                     <div
@@ -393,7 +429,6 @@ export default function JourneyMap({ modules, objectives, onSelect }: Props) {
                   </div>
                 </div>
               ) : (
-                /* All objectives for this module */
                 (() => {
                   const modObjs = objectives.filter(
                     (o) => o.moduleId === panelModule.id,

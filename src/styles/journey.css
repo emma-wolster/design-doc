@@ -54,16 +54,29 @@
   pointer-events: none; z-index: 0;
 }
 
+/* ─── CENTERED CONTAINER ─────────────────────── */
+.jm-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding-left: 56px;
+  padding-right: 56px;
+}
+
 /* ─── HEADER ──────────────────────────────────── */
 .jm-hdr {
   position: relative; z-index: 10;
-  padding: 48px 56px 40px;
+  padding: 48px 0 40px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 32px;
   flex-wrap: wrap;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 56px;
+  padding-right: 56px;
 }
 .jm-eyebrow {
   font-size: 12px; font-weight: 700;
@@ -95,7 +108,10 @@
   background: rgba(0,101,255,0.04);
   border-bottom: 1px solid var(--border);
   display: flex; gap: 36px; flex-wrap: wrap;
+  justify-content: center;
   font-size: 13px; color: rgba(76,154,255,0.6);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 .jm-hint-item { display: flex; align-items: center; gap: 8px; }
 .jm-hint-icon { font-size: 14px; }
@@ -105,12 +121,15 @@
   position: relative; z-index: 5;
   padding: 48px 56px 64px;
   overflow-x: auto;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* ─── FLAGS ROW ───────────────────────────────── */
 .jm-flags-row {
   display: flex;
   align-items: stretch;
+  justify-content: center;
   margin-bottom: 24px;
   position: relative; z-index: 20;
 }
@@ -121,18 +140,26 @@
   position: relative;
   cursor: grab;
   user-select: none;
-  animation: jm-reveal-up .4s ease both;
+  touch-action: none;  /* required for pointer events to work reliably */
 }
 .jm-module:active { cursor: grabbing; }
-.jm-module.is-dragging { opacity: 0.25; pointer-events: none; }
+.jm-module.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.96);
+  transition: opacity .15s, transform .15s;
+}
 .jm-module.is-over::before {
   content: '';
   position: absolute;
   inset: -3px;
-  border: 2px dashed rgba(255,255,255,0.3);
+  border: 2px dashed var(--accent);
   border-radius: 8px;
   z-index: 100;
   pointer-events: none;
+}
+.jm-module.is-over {
+  transform: scale(1.03);
+  transition: transform .15s;
 }
 
 /* ─── FLAG / CHEVRON ──────────────────────────── */
@@ -141,7 +168,7 @@
   display: flex; align-items: center;
   gap: 10px;
   padding: 12px 24px 12px 16px;
-  font-size: 13px; font-weight: 700;
+  font-size: 15px; font-weight: 700;
   letter-spacing: .01em;
   color: var(--flag-text);
   white-space: nowrap;
@@ -429,7 +456,10 @@
   padding: 20px 56px;
   border-top: 1px solid var(--border);
   display: flex; gap: 32px; flex-wrap: wrap;
+  justify-content: center;
   font-size: 13px; color: var(--muted);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 .jm-leg { display: flex; align-items: center; gap: 8px; }
 .jm-leg-node {
