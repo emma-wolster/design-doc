@@ -18,6 +18,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Archive folder
+_archive/
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
